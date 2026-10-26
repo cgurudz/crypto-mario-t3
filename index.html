@@ -1,0 +1,998 @@
+<!DOCTYPE html>
+<html lang="ms">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Crypto Mario: Misi Kriptografi ASK T3</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Font: Press Start 2P & Inter -->
+    <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #0f172a;
+            color: #f8fafc;
+            touch-action: manipulation;
+        }
+        .pixel-font {
+            font-family: 'Press Start 2P', cursive;
+        }
+        canvas {
+            background: linear-gradient(to bottom, #1e1b4b, #312e81);
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.5);
+            image-rendering: pixelated;
+        }
+        /* Custom scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #1e293b;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #475569;
+            border-radius: 4px;
+        }
+
+        /* Print styles for Student Report Card */
+        @media print {
+            body {
+                background-color: #ffffff !important;
+                color: #000000 !important;
+            }
+            header, footer, #hud, #gameCanvas, .sm\:hidden, #start-overlay, #quiz-overlay, #level-complete-overlay, #form-overlay, #btn-restart, #btn-print {
+                display: none !important;
+            }
+            #scorecard-overlay {
+                position: absolute !important;
+                inset: 0 !important;
+                background: #ffffff !important;
+                color: #000000 !important;
+                padding: 0 !important;
+                display: block !important;
+            }
+            #scorecard-card {
+                border: 3px solid #000000 !important;
+                background: #ffffff !important;
+                color: #000000 !important;
+                box-shadow: none !important;
+                max-width: 100% !important;
+                margin: 0 !important;
+            }
+            .print-dark-text {
+                color: #000000 !important;
+            }
+            .print-border {
+                border-color: #333333 !important;
+            }
+            .print-bg-gray {
+                background-color: #f1f5f9 !important;
+            }
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col justify-between items-center p-2 sm:p-4 select-none">
+
+    <!-- Header Section -->
+    <header class="w-full max-w-4xl flex justify-between items-center mb-2 px-2">
+        <div class="flex items-center space-x-2">
+            <span class="text-2xl">🔐</span>
+            <h1 class="pixel-font text-xs sm:text-base text-amber-400 font-bold tracking-wider">CRYPTO MARIO T3</h1>
+        </div>
+        <div class="text-xs sm:text-sm text-slate-300 bg-slate-800 px-3 py-1 rounded-full border border-slate-700">
+            BAB 2: Kriptografi ASK
+        </div>
+    </header>
+
+    <!-- Main Game Container -->
+    <main class="w-full max-w-4xl relative flex flex-col items-center">
+        
+        <!-- Top HUD Bar -->
+        <div id="hud" class="w-full bg-slate-900 border-2 border-amber-500 rounded-t-xl p-3 flex justify-between items-center text-xs sm:text-sm font-bold pixel-font text-amber-300">
+            <div>TAHAP: <span id="hud-level" class="text-white">1 (MUDAH)</span></div>
+            <div>MARKAH: <span id="hud-score" class="text-green-400">0</span></div>
+            <div>NYAWA: <span id="hud-lives" class="text-red-400">❤️❤️❤️</span></div>
+            <div>KUNCI: <span id="hud-keys" class="text-yellow-400">0/3</span></div>
+        </div>
+
+        <!-- Canvas Area -->
+        <div class="relative w-full bg-slate-950 rounded-b-xl overflow-hidden border-2 border-t-0 border-amber-500">
+            <canvas id="gameCanvas" width="800" height="400" class="w-full h-auto block"></canvas>
+
+            <!-- Overlay Screen: Start / Menu -->
+            <div id="start-overlay" class="absolute inset-0 bg-slate-950/90 backdrop-blur-md flex flex-col items-center justify-center p-6 text-center z-10">
+                <h2 class="pixel-font text-lg sm:text-2xl text-amber-400 mb-3 animate-pulse">MISI KRIPTOGRAFI</h2>
+                <p class="text-slate-300 text-xs sm:text-sm max-w-md mb-6 leading-relaxed">
+                    Bantu <b>Ajen Kripto</b> mengumpul Kunci Sifer 🔑, menjawab Soalan Kriptografi ❓, dan mengelak Cyber-Virus 👾 untuk menyelamatkan data sekolah!
+                </p>
+                <div class="bg-slate-800/80 p-4 rounded-lg mb-6 text-left text-xs max-w-sm border border-slate-700 text-slate-300 space-y-1">
+                    <p class="font-semibold text-amber-300 mb-1">🎮 Kawalan Permainan:</p>
+                    <p>• <b>Kiri / Kanan:</b> Anak Panah / Butang A D</p>
+                    <p>• <b>Lompat:</b> Spacebar / Anak Panah Atas / W</p>
+                    <p>• <b>Lompat atas Kotak Soalan ❓</b> untuk jawab kuiz!</p>
+                </div>
+                <button id="btn-start" class="pixel-font bg-amber-500 hover:bg-amber-400 text-slate-950 px-6 py-3 rounded-lg text-sm transition transform hover:scale-105 active:scale-95 shadow-lg font-bold">
+                    MULA PERMAINAN 🚀
+                </button>
+            </div>
+
+            <!-- Overlay Screen: Quiz Modal -->
+            <div id="quiz-overlay" class="hidden absolute inset-0 bg-slate-950/95 flex flex-col items-center justify-center p-4 sm:p-6 z-20">
+                <div class="bg-slate-900 border-2 border-cyan-500 rounded-xl p-5 max-w-lg w-full text-left shadow-2xl">
+                    <div class="flex justify-between items-center mb-3">
+                        <span class="pixel-font text-xs text-cyan-400">SOALAN CABARAN KRIPTOGRAFI</span>
+                        <span id="quiz-level-tag" class="text-xs bg-cyan-950 text-cyan-300 px-2 py-0.5 rounded">Tahap 1</span>
+                    </div>
+                    <h3 id="quiz-question" class="text-sm sm:text-base font-semibold text-white mb-4 leading-snug">
+                        Apakah maksud istilah "Penyulitan" (Encryption)?
+                    </h3>
+                    <div id="quiz-options" class="space-y-2 mb-4">
+                        <!-- Options injected dynamically -->
+                    </div>
+                    <div id="quiz-feedback" class="hidden p-3 rounded-lg text-xs font-semibold mb-3"></div>
+                    <button id="btn-quiz-continue" class="hidden w-full pixel-font bg-cyan-500 hover:bg-cyan-400 text-slate-950 py-2.5 rounded text-xs transition font-bold">
+                        TERUSKAN PERMAINAN ▶
+                    </button>
+                </div>
+            </div>
+
+            <!-- Overlay Screen: Level Complete Modal -->
+            <div id="level-complete-overlay" class="hidden absolute inset-0 bg-slate-950/90 flex flex-col items-center justify-center p-6 text-center z-20">
+                <div class="text-4xl mb-2">🎉</div>
+                <h2 id="level-title" class="pixel-font text-base sm:text-xl text-green-400 mb-2">TAHAP 1 SELESAI!</h2>
+                <p id="level-summary" class="text-xs sm:text-sm text-slate-300 max-w-md mb-6">
+                    Syabas! Anda telah berjaya menguasai konsep asas Kriptografi.
+                </p>
+                <button id="btn-next-level" class="pixel-font bg-green-500 hover:bg-green-400 text-slate-950 px-6 py-3 rounded-lg text-xs transition transform hover:scale-105 font-bold">
+                    KE TAHAP SETERUSNYA ➔
+                </button>
+            </div>
+
+            <!-- Overlay Screen: Form Submission (End Game) -->
+            <div id="form-overlay" class="hidden absolute inset-0 bg-slate-950/95 flex flex-col items-center justify-center p-4 sm:p-6 z-30">
+                <div class="bg-slate-900 border-2 border-amber-500 rounded-xl p-6 max-w-md w-full text-center">
+                    <div class="text-3xl mb-2">🏆</div>
+                    <h2 class="pixel-font text-sm sm:text-lg text-amber-400 mb-1">MISI TAMAT!</h2>
+                    <p class="text-xs text-slate-300 mb-4">Sila isi maklumat murid untuk merekod markah pencapaian anda.</p>
+                    
+                    <form id="student-form" class="space-y-4 text-left">
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-300 mb-1">Nama Full / Nama Murid:</label>
+                            <input type="text" id="student-name" required placeholder="Contoh: Ahmad Daniel Bin Rosli" 
+                                class="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-xs text-white focus:outline-none focus:border-amber-400">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-300 mb-1">Tingkatan / Kelas:</label>
+                            <input type="text" id="student-class" required placeholder="Contoh: 3 Alfa / 3 Amanah" 
+                                class="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-xs text-white focus:outline-none focus:border-amber-400">
+                        </div>
+                        <button type="submit" class="w-full pixel-font bg-amber-500 hover:bg-amber-400 text-slate-950 py-3 rounded-lg text-xs font-bold transition">
+                            LIHAT KAD PENCAPAIAN 📊
+                        </button>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Overlay Screen: Scorecard Certificate -->
+            <div id="scorecard-overlay" class="hidden absolute inset-0 bg-slate-950 overflow-y-auto p-3 sm:p-6 z-40 flex flex-col items-center">
+                <div id="scorecard-card" class="bg-slate-900 border-4 border-amber-500 rounded-2xl p-5 sm:p-6 max-w-xl w-full text-center relative shadow-2xl my-auto">
+                    
+                    <!-- Certificate Header -->
+                    <div class="border-b border-slate-700 print-border pb-3 mb-4">
+                        <div class="flex justify-between items-center text-[10px] text-amber-400 font-bold uppercase tracking-widest mb-1">
+                            <span>KPM ASK TINGKATAN 3</span>
+                            <span id="res-timestamp" class="text-slate-400 print-dark-text">-</span>
+                        </div>
+                        <h2 class="pixel-font text-sm sm:text-lg text-white print-dark-text">KAD LAPORAN PENCAPAIAN MURID</h2>
+                        <p class="text-xs text-slate-300 print-dark-text font-medium mt-1">Bab 2: Kriptografi Dalam Keselamatan Data</p>
+                    </div>
+
+                    <!-- Student Info Box -->
+                    <div class="bg-slate-800/80 print-bg-gray rounded-xl p-3 mb-4 text-left border border-slate-700 print-border text-xs grid grid-cols-2 gap-3">
+                        <div>
+                            <span class="text-slate-400 print-dark-text font-semibold">Nama Murid:</span>
+                            <br><strong id="res-name" class="text-amber-300 print-dark-text text-sm font-bold">-</strong>
+                        </div>
+                        <div>
+                            <span class="text-slate-400 print-dark-text font-semibold">Tingkatan / Kelas:</span>
+                            <br><strong id="res-class" class="text-amber-300 print-dark-text text-sm font-bold">-</strong>
+                        </div>
+                    </div>
+
+                    <!-- Score & Performance Metrics -->
+                    <div class="grid grid-cols-2 sm:grid-cols-4 gap-2 mb-4">
+                        <div class="bg-slate-800/80 print-bg-gray p-2.5 rounded-xl border border-slate-700 print-border">
+                            <div class="text-[9px] text-slate-400 print-dark-text uppercase font-bold">Markah</div>
+                            <div id="res-score" class="pixel-font text-base sm:text-lg text-green-400 print-dark-text font-bold mt-1">0</div>
+                        </div>
+                        <div class="bg-slate-800/80 print-bg-gray p-2.5 rounded-xl border border-slate-700 print-border">
+                            <div class="text-[9px] text-slate-400 print-dark-text uppercase font-bold">Kuiz Tepat</div>
+                            <div id="res-accuracy" class="pixel-font text-base sm:text-lg text-cyan-400 print-dark-text font-bold mt-1">0/0</div>
+                        </div>
+                        <div class="bg-slate-800/80 print-bg-gray p-2.5 rounded-xl border border-slate-700 print-border">
+                            <div class="text-[9px] text-slate-400 print-dark-text uppercase font-bold">Gred Ujian</div>
+                            <div id="res-grade" class="pixel-font text-base sm:text-lg text-amber-400 print-dark-text font-bold mt-1">A+</div>
+                        </div>
+                        <div class="bg-slate-800/80 print-bg-gray p-2.5 rounded-xl border border-slate-700 print-border">
+                            <div class="text-[9px] text-slate-400 print-dark-text uppercase font-bold">Tahap Penguasaan</div>
+                            <div id="res-tp" class="pixel-font text-base sm:text-lg text-purple-400 print-dark-text font-bold mt-1">TP 6</div>
+                        </div>
+                    </div>
+
+                    <!-- Sub-topic Breakdown -->
+                    <div class="bg-slate-800/50 print-bg-gray border border-slate-700 print-border rounded-xl p-3 mb-4 text-left text-xs">
+                        <div class="font-bold text-amber-300 print-dark-text mb-2 flex items-center justify-between">
+                            <span>📚 Penguasaan Sub-Topik (DSKP ASK T3):</span>
+                            <span class="text-[10px] text-slate-400 print-dark-text font-normal">Status Penguasaan</span>
+                        </div>
+                        <div class="space-y-1.5 text-[11px] text-slate-300 print-dark-text">
+                            <div class="flex justify-between items-center border-b border-slate-700/50 pb-1">
+                                <span>2.1.1 Maksud & Kepentingan Kriptografi</span>
+                                <span id="tp-topic-1" class="font-semibold text-green-400 print-dark-text">✔ Menguasai</span>
+                            </div>
+                            <div class="flex justify-between items-center border-b border-slate-700/50 pb-1">
+                                <span>2.1.1 4 Perkhidmatan Keselamatan Data</span>
+                                <span id="tp-topic-2" class="font-semibold text-green-400 print-dark-text">✔ Menguasai</span>
+                            </div>
+                            <div class="flex justify-between items-center">
+                                <span>2.1.2 Sifer Simetri & Tidak Simetri</span>
+                                <span id="tp-topic-3" class="font-semibold text-green-400 print-dark-text">✔ Menguasai</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Achievement Status Message & Feedback -->
+                    <div class="bg-slate-800/40 print-bg-gray border border-amber-500/30 print-border rounded-xl p-3 mb-5 text-left">
+                        <div class="text-xs font-semibold text-amber-400 print-dark-text mb-1">💬 Ulasan Penilaian & Cadangan PBD:</div>
+                        <p id="res-feedback" class="text-xs text-slate-300 print-dark-text leading-relaxed">
+                            Pencapaian cemerlang! Anda telah menguasai konsep penyulitan, nyahsulit, serta perbezaan Sifer Simetri dan Tidak Simetri.
+                        </p>
+                    </div>
+
+                    <!-- Action Buttons -->
+                    <div class="flex flex-col sm:flex-row gap-2">
+                        <button id="btn-restart" class="flex-1 pixel-font bg-amber-500 hover:bg-amber-400 text-slate-950 py-3 rounded-lg text-xs font-bold transition">
+                            MAIN SEMULA 🔄
+                        </button>
+                        <button id="btn-exit" class="flex-1 pixel-font bg-slate-700 hover:bg-slate-600 text-white py-3 rounded-lg text-xs font-bold transition">
+                            KELUAR 🚪
+                        </button>
+                    </div>
+
+                </div>
+            </div>
+
+        </div>
+
+        <!-- Touch Controls for Mobile/Tablet -->
+        <div class="w-full mt-3 flex justify-between items-center sm:hidden px-2">
+            <div class="flex space-x-2">
+                <button id="btn-left" class="bg-slate-800 active:bg-amber-500 text-white p-4 rounded-xl text-xl w-14 h-14 border border-slate-700 shadow-md">◀</button>
+                <button id="btn-right" class="bg-slate-800 active:bg-amber-500 text-white p-4 rounded-xl text-xl w-14 h-14 border border-slate-700 shadow-md">▶</button>
+            </div>
+            <button id="btn-jump" class="bg-amber-500 active:bg-amber-400 text-slate-950 font-bold p-4 rounded-xl text-sm w-24 h-14 border border-amber-400 shadow-md pixel-font">JUMP ⬆</button>
+        </div>
+    </main>
+
+    <!-- Footer Section -->
+    <footer class="mt-4 text-center text-xs text-slate-500">
+        Crypto Mario ASK Tingkatan 3 &bull; Diberdayakan oleh HTML5 & Canvas
+    </footer>
+
+    <!-- Game Logic JavaScript -->
+    <script>
+        // --- Web Audio API Generator for Retro Sounds ---
+        const AudioCtx = window.AudioContext || window.webkitAudioContext;
+        let audioCtx = null;
+
+        function initAudio() {
+            if (!audioCtx) audioCtx = new AudioCtx();
+        }
+
+        function playSound(type) {
+            if (!audioCtx) return;
+            try {
+                const osc = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
+                osc.connect(gain);
+                gain.connect(audioCtx.destination);
+
+                const now = audioCtx.currentTime;
+
+                if (type === 'jump') {
+                    osc.type = 'square';
+                    osc.frequency.setValueAtTime(150, now);
+                    osc.frequency.exponentialRampToValueAtTime(400, now + 0.15);
+                    gain.gain.setValueAtTime(0.1, now);
+                    gain.gain.linearRampToValueAtTime(0.01, now + 0.15);
+                    osc.start(now);
+                    osc.stop(now + 0.15);
+                } else if (type === 'coin') {
+                    osc.type = 'sine';
+                    osc.frequency.setValueAtTime(800, now);
+                    osc.frequency.setValueAtTime(1200, now + 0.08);
+                    gain.gain.setValueAtTime(0.15, now);
+                    gain.gain.linearRampToValueAtTime(0.01, now + 0.2);
+                    osc.start(now);
+                    osc.stop(now + 0.2);
+                } else if (type === 'hit') {
+                    osc.type = 'sawtooth';
+                    osc.frequency.setValueAtTime(120, now);
+                    osc.frequency.linearRampToValueAtTime(40, now + 0.2);
+                    gain.gain.setValueAtTime(0.2, now);
+                    gain.gain.linearRampToValueAtTime(0.01, now + 0.2);
+                    osc.start(now);
+                    osc.stop(now + 0.2);
+                } else if (type === 'win') {
+                    osc.type = 'triangle';
+                    osc.frequency.setValueAtTime(400, now);
+                    osc.frequency.setValueAtTime(600, now + 0.1);
+                    osc.frequency.setValueAtTime(800, now + 0.2);
+                    gain.gain.setValueAtTime(0.15, now);
+                    gain.gain.linearRampToValueAtTime(0.01, now + 0.4);
+                    osc.start(now);
+                    osc.stop(now + 0.4);
+                }
+            } catch (e) {
+                // Ignore audio errors
+            }
+        }
+
+        // --- Educational Questions Database (ASK Tingkatan 3 Bab 2) ---
+        const questionBank = {
+            1: [
+                {
+                    q: "Apakah maksud utama Kriptografi (Cryptography) dalam pengkomputeran?",
+                    options: [
+                        "Kajian tentang teknik kerahsiaan atau keselamatan komunikasi data",
+                        "Satu kaedah membaiki perkakasan komputer yang rosak",
+                        "Bahasa pengaturcaraan untuk membina laman sesawang",
+                        "Proses memadam fail yang tidak digunakan"
+                    ],
+                    correct: 0,
+                    explanation: "Kriptografi berasal daripada 'kriptos' (sembunyi) & 'graphein' (tulis) iaitu kajian teknik kerahsiaan data."
+                },
+                {
+                    q: "Apakah yang dimaksudkan dengan 'Teks Biasa' (Plaintext)?",
+                    options: [
+                        "Mesej asal yang boleh dibaca dan difahami oleh manusia",
+                        "Teks yang telah disulitkan menjadi simbol bercelaru",
+                        "Mesej yang dihantar menggunakan bahasa isyarat",
+                        "Fail sistem yang dikunci oleh kata laluan"
+                    ],
+                    correct: 0,
+                    explanation: "Teks biasa (plaintext) ialah mesej asal dalam bentuk terbuka dan boleh dibaca terus."
+                },
+                {
+                    q: "Proses menukarkan Teks Biasa kepada Teks Sifer dinamakan...",
+                    options: [
+                        "Penyulitan (Encryption)",
+                        "Nyahsulit (Decryption)",
+                        "Penyahkodan (Decoding)",
+                        "Pengesahan (Authentication)"
+                    ],
+                    correct: 0,
+                    explanation: "Penyulitan (Encryption) ialah proses menukar teks biasa menjadi teks sifer yang tidak bermakna."
+                }
+            ],
+            2: [
+                {
+                    q: "Apakah perkhidmatan keselamatan yang memastikan maklumat TIDAK diubah oleh pihak ketiga?",
+                    options: [
+                        "Integriti (Integrity)",
+                        "Kerahsiaan (Confidentiality)",
+                        "Pengesahan (Authentication)",
+                        "Tiada Sangkalan (Non-repudiation)"
+                    ],
+                    correct: 0,
+                    explanation: "Integriti mengesan sebarang perubahan atau ubah suai terhadap maklumat asal."
+                },
+                {
+                    q: "Penggunaan Nama Pengguna (Username) dan Kata Laluan (Password) perbankan internet merujuk kepada perkhidmatan...",
+                    options: [
+                        "Pengesahan (Authentication)",
+                        "Tiada Sangkalan (Non-repudiation)",
+                        "Penyahkodan Moden",
+                        "Kerahsiaan Mutlak"
+                    ],
+                    correct: 0,
+                    explanation: "Pengesahan (Authentication) berkaitan pengenalpastian pihak yang betul dalam komunikasi."
+                },
+                {
+                    q: "Perkhidmatan 'Tiada Sangkalan' (Non-repudiation) bertujuan untuk...",
+                    options: [
+                        "Memastikan penghantar/penerima tidak menafikan hantaran/terimaan mesej",
+                        "Menyembunyikan lokasi server utama daripada penceroboh",
+                        "Memproses pengiraan matematik kunci awam",
+                        "Memastikan komputer bebas daripada virus"
+                    ],
+                    correct: 0,
+                    explanation: "Tiada sangkalan memastikan pihak terbabit tidak boleh menafikan transaksi yang telah berlaku."
+                }
+            ],
+            3: [
+                {
+                    q: "Ciri utama Sifer Kunci Simetri ialah...",
+                    options: [
+                        "Menggunakan SATU kunci yang SAMA untuk penyulitan dan nyahsulit",
+                        "Menggunakan dua kunci berbeza iaitu kunci awam dan persendirian",
+                        "Hanya digunakan dalam transaksi kriptografi moden tinggi",
+                        "Tidak memerlukan sebarang kunci rahsia"
+                    ],
+                    correct: 0,
+                    explanation: "Sifer Kunci Simetri menggunakan 1 kunci yang sama untuk proses Penyulitan dan Nyahsulit."
+                },
+                {
+                    q: "Apakah jenis kunci yang digunakan dalam Sifer Kunci Tidak Simetri untuk NYAHSULIT mesej?",
+                    options: [
+                        "Kunci Persendirian (Private Key)",
+                        "Kunci Awam (Public Key)",
+                        "Kunci Caesar Moden",
+                        "Kunci Simetri Sama"
+                    ],
+                    correct: 0,
+                    explanation: "Dalam Sifer Tidak Simetri, Kunci Awam untuk menyulitkan dan Kunci Persendirian disimpan rahsia untuk nyahsulit."
+                },
+                {
+                    q: "Sifer klasik seperti Caesar Cipher dan Reverse Cipher tergolong dalam kategori...",
+                    options: [
+                        "Sifer Kunci Simetri",
+                        "Sifer Kunci Tidak Simetri",
+                        "Sifer Kunci Kuantum",
+                        "Sifer Kunci Awam"
+                    ],
+                    correct: 0,
+                    explanation: "Sifer klasik menggunakan satu kunci yang sama (Simetri)."
+                }
+            ]
+        };
+
+        // --- Game Engine Canvas & State ---
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+
+        // State Variables
+        let currentLevel = 1;
+        let score = 0;
+        let lives = 3;
+        let keysCollected = 0;
+        let totalKeysInLevel = 3;
+        let quizCorrectCount = 0;
+        let totalQuizAttempted = 0;
+        let isGameOver = false;
+        let isGamePaused = false;
+        let activeQuiz = null;
+
+        // Player Data
+        let studentData = { name: '', classGroup: '' };
+
+        // Key states
+        const keys = { left: false, right: false, up: false };
+
+        // Player Object (Ajen Kripto)
+        const player = {
+            x: 50,
+            y: 300,
+            width: 24,
+            height: 32,
+            vx: 0,
+            vy: 0,
+            speed: 3.8,
+            jumpPower: -10,
+            grounded: false,
+            color: '#f59e0b',
+            facingRight: true
+        };
+
+        // Level Level Map Entities
+        let platforms = [];
+        let collectibles = [];
+        let questionBlocks = [];
+        let enemies = [];
+        let goalDoor = { x: 730, y: 300, width: 36, height: 50, open: false };
+
+        // --- Level Layout Generator ---
+        function loadLevel(lvl) {
+            currentLevel = lvl;
+            keysCollected = 0;
+            player.x = 50;
+            player.y = 300;
+            player.vx = 0;
+            player.vy = 0;
+            isGamePaused = false;
+
+            // Update HUD
+            document.getElementById('hud-level').innerText = `${lvl} (${lvl === 1 ? 'MUDAH' : lvl === 2 ? 'SEDERHANA' : 'SUKAR'})`;
+            document.getElementById('hud-keys').innerText = `0/${totalKeysInLevel}`;
+
+            // Reset Platforms
+            platforms = [
+                // Main Ground
+                { x: 0, y: 350, width: 800, height: 50, color: '#334155' },
+                // Floating Platforms
+                { x: 120, y: 280, width: 100, height: 16, color: '#475569' },
+                { x: 270, y: 220, width: 120, height: 16, color: '#475569' },
+                { x: 440, y: 260, width: 110, height: 16, color: '#475569' },
+                { x: 590, y: 200, width: 120, height: 16, color: '#475569' },
+            ];
+
+            // Adjust speed/enemies according to level
+            let enemySpeed = 1 + lvl * 0.5;
+
+            // Reset Enemies
+            enemies = [
+                { x: 280, y: 198, width: 22, height: 22, minX: 270, maxX: 370, vx: enemySpeed, type: 'virus' },
+                { x: 460, y: 328, width: 22, height: 22, minX: 420, maxX: 620, vx: -enemySpeed, type: 'virus' }
+            ];
+
+            if (lvl >= 2) {
+                enemies.push({ x: 600, y: 178, width: 22, height: 22, minX: 590, maxX: 690, vx: enemySpeed, type: 'virus' });
+            }
+            if (lvl === 3) {
+                enemies.push({ x: 140, y: 258, width: 22, height: 22, minX: 120, maxX: 200, vx: enemySpeed, type: 'virus' });
+            }
+
+            // Reset Collectibles (Crypto Keys 🔑)
+            collectibles = [
+                { x: 160, y: 245, width: 16, height: 16, collected: false },
+                { x: 320, y: 185, width: 16, height: 16, collected: false },
+                { x: 630, y: 165, width: 16, height: 16, collected: false }
+            ];
+
+            // Question Blocks (❓)
+            questionBlocks = [
+                { x: 230, y: 170, width: 24, height: 24, active: true, qIndex: 0 },
+                { x: 480, y: 200, width: 24, height: 24, active: true, qIndex: 1 },
+                { x: 540, y: 120, width: 24, height: 24, active: true, qIndex: 2 }
+            ];
+
+            // Goal Door
+            goalDoor = { x: 730, y: 290, width: 40, height: 60, open: false };
+        }
+
+        // --- Event Listeners for Input ---
+        window.addEventListener('keydown', (e) => {
+            // Benarkan input borang menerima semua kekunci (termasuk ruang / space)
+            if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
+            
+            initAudio();
+            if (e.key === 'ArrowLeft' || e.key === 'a' || e.key === 'A') keys.left = true;
+            if (e.key === 'ArrowRight' || e.key === 'd' || e.key === 'D') keys.right = true;
+            if (e.key === 'ArrowUp' || e.key === 'w' || e.key === 'W' || e.key === ' ') {
+                keys.up = true;
+                e.preventDefault();
+            }
+        });
+
+        window.addEventListener('keyup', (e) => {
+            if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
+            
+            if (e.key === 'ArrowLeft' || e.key === 'a' || e.key === 'A') keys.left = false;
+            if (e.key === 'ArrowRight' || e.key === 'd' || e.key === 'D') keys.right = false;
+            if (e.key === 'ArrowUp' || e.key === 'w' || e.key === 'W' || e.key === ' ') keys.up = false;
+        });
+
+        // Touch Control Listeners
+        const setupTouchBtn = (id, keyName) => {
+            const btn = document.getElementById(id);
+            if (!btn) return;
+            btn.addEventListener('touchstart', (e) => {
+                e.preventDefault();
+                initAudio();
+                keys[keyName] = true;
+            });
+            btn.addEventListener('touchend', (e) => {
+                e.preventDefault();
+                keys[keyName] = false;
+            });
+        };
+        setupTouchBtn('btn-left', 'left');
+        setupTouchBtn('btn-right', 'right');
+        setupTouchBtn('btn-jump', 'up');
+
+        // --- Collision Helper ---
+        function checkAABB(rect1, rect2) {
+            return (
+                rect1.x < rect2.x + rect2.width &&
+                rect1.x + rect1.width > rect2.x &&
+                rect1.y < rect2.y + rect2.height &&
+                rect1.y + rect1.height > rect2.y
+            );
+        }
+
+        // --- Game Update Loop ---
+        function update() {
+            if (isGameOver || isGamePaused) return;
+
+            // Player Horizontal Movement
+            if (keys.left) {
+                player.vx = -player.speed;
+                player.facingRight = false;
+            } else if (keys.right) {
+                player.vx = player.speed;
+                player.facingRight = true;
+            } else {
+                player.vx = 0;
+            }
+
+            // Player Jump
+            if (keys.up && player.grounded) {
+                player.vy = player.jumpPower;
+                player.grounded = false;
+                playSound('jump');
+            }
+
+            // Gravity
+            player.vy += 0.5;
+
+            // Apply Movements
+            player.x += player.vx;
+            player.y += player.vy;
+
+            // Canvas Boundaries
+            if (player.x < 0) player.x = 0;
+            if (player.x + player.width > canvas.width) player.x = canvas.width - player.width;
+
+            // Platform Collisions
+            player.grounded = false;
+            platforms.forEach(plat => {
+                if (checkAABB(player, plat)) {
+                    // Coming from top
+                    if (player.vy > 0 && player.y + player.height - player.vy <= plat.y + 10) {
+                        player.y = plat.y - player.height;
+                        player.vy = 0;
+                        player.grounded = true;
+                    }
+                }
+            });
+
+            // Enemy Logic & Collision
+            enemies.forEach(enemy => {
+                enemy.x += enemy.vx;
+                if (enemy.x <= enemy.minX || enemy.x + enemy.width >= enemy.maxX) {
+                    enemy.vx *= -1;
+                }
+
+                if (checkAABB(player, enemy)) {
+                    // Stomp enemy
+                    if (player.vy > 0 && player.y + player.height - player.vy <= enemy.y + 10) {
+                        player.vy = player.jumpPower * 0.7;
+                        enemy.x = -999; // Remove enemy
+                        score += 50;
+                        updateHUD();
+                        playSound('coin');
+                    } else {
+                        // Player damaged
+                        handlePlayerHit();
+                    }
+                }
+            });
+
+            // Collectibles Logic (🔑)
+            collectibles.forEach(item => {
+                if (!item.collected && checkAABB(player, item)) {
+                    item.collected = true;
+                    keysCollected++;
+                    score += 100;
+                    playSound('coin');
+                    document.getElementById('hud-keys').innerText = `${keysCollected}/${totalKeysInLevel}`;
+                    updateHUD();
+
+                    if (keysCollected >= totalKeysInLevel) {
+                        goalDoor.open = true;
+                    }
+                }
+            });
+
+            // Question Blocks Logic (❓)
+            questionBlocks.forEach(block => {
+                if (block.active && checkAABB(player, block)) {
+                    // Hit block from bottom
+                    if (player.vy < 0) {
+                        block.active = false;
+                        triggerQuiz(block.qIndex);
+                    }
+                }
+            });
+
+            // Goal Door Logic
+            if (checkAABB(player, goalDoor)) {
+                if (keysCollected >= totalKeysInLevel) {
+                    levelComplete();
+                }
+            }
+
+            // Fall Off World Check
+            if (player.y > canvas.height + 50) {
+                handlePlayerHit();
+            }
+        }
+
+        // --- Player Hit Handling ---
+        function handlePlayerHit() {
+            lives--;
+            playSound('hit');
+            updateHUD();
+
+            if (lives <= 0) {
+                isGameOver = true;
+                setTimeout(() => {
+                    showStudentForm();
+                }, 500);
+            } else {
+                // Respawn
+                player.x = 50;
+                player.y = 300;
+                player.vx = 0;
+                player.vy = 0;
+            }
+        }
+
+        function updateHUD() {
+            document.getElementById('hud-score').innerText = score;
+            document.getElementById('hud-lives').innerText = '❤️'.repeat(Math.max(0, lives));
+        }
+
+        // --- Trigger Quiz Modal ---
+        function triggerQuiz(qIndex) {
+            isGamePaused = true;
+            const qList = questionBank[currentLevel];
+            const qData = qList[qIndex % qList.length];
+            activeQuiz = qData;
+
+            document.getElementById('quiz-level-tag').innerText = `Tahap ${currentLevel}`;
+            document.getElementById('quiz-question').innerText = qData.q;
+            
+            const optionsContainer = document.getElementById('quiz-options');
+            optionsContainer.innerHTML = '';
+
+            const feedbackEl = document.getElementById('quiz-feedback');
+            feedbackEl.classList.add('hidden');
+            document.getElementById('btn-quiz-continue').classList.add('hidden');
+
+            qData.options.forEach((optText, i) => {
+                const btn = document.createElement('button');
+                btn.className = "w-full text-left bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 p-3 rounded-lg text-xs transition flex items-center space-x-2";
+                btn.innerHTML = `<span class="bg-slate-700 text-cyan-400 font-bold px-2 py-0.5 rounded text-[10px]">${String.fromCharCode(65 + i)}</span> <span>${optText}</span>`;
+                btn.onclick = () => submitQuizAnswer(i, btn);
+                optionsContainer.appendChild(btn);
+            });
+
+            document.getElementById('quiz-overlay').classList.remove('hidden');
+        }
+
+        function submitQuizAnswer(selectedIndex, clickedBtn) {
+            totalQuizAttempted++;
+            const feedbackEl = document.getElementById('quiz-feedback');
+            const optionsContainer = document.getElementById('quiz-options');
+            
+            // Disable all option buttons
+            Array.from(optionsContainer.children).forEach(btn => btn.disabled = true);
+
+            if (selectedIndex === activeQuiz.correct) {
+                quizCorrectCount++;
+                score += 200;
+                updateHUD();
+                playSound('win');
+                clickedBtn.classList.remove('bg-slate-800');
+                clickedBtn.classList.add('bg-green-900/80', 'border-green-500');
+                feedbackEl.className = "p-3 rounded-lg text-xs font-semibold mb-3 bg-green-950 text-green-300 border border-green-700";
+                feedbackEl.innerHTML = `✅ <b>Jawapan Betul! (+200 Markah)</b><br>${activeQuiz.explanation}`;
+            } else {
+                playSound('hit');
+                clickedBtn.classList.remove('bg-slate-800');
+                clickedBtn.classList.add('bg-red-900/80', 'border-red-500');
+                feedbackEl.className = "p-3 rounded-lg text-xs font-semibold mb-3 bg-red-950 text-red-300 border border-red-700";
+                feedbackEl.innerHTML = `❌ <b>Jawapan Kurang Tepat.</b><br>${activeQuiz.explanation}`;
+            }
+
+            feedbackEl.classList.remove('hidden');
+            document.getElementById('btn-quiz-continue').classList.remove('hidden');
+        }
+
+        document.getElementById('btn-quiz-continue').addEventListener('click', () => {
+            document.getElementById('quiz-overlay').classList.add('hidden');
+            isGamePaused = false;
+        });
+
+        // --- Level Completion ---
+        function levelComplete() {
+            isGamePaused = true;
+            playSound('win');
+            score += 300; // Level bonus
+            updateHUD();
+
+            if (currentLevel < 3) {
+                document.getElementById('level-title').innerText = `TAHAP ${currentLevel} SELESAI!`;
+                document.getElementById('level-summary').innerText = currentLevel === 1 
+                    ? "Syabas! Anda telah menguasai konsep Asas Kriptografi, Teks Biasa & Teks Sifer."
+                    : "Hebat! Anda berjaya memahami 4 Perkhidmatan Keselamatan Kriptografi!";
+                document.getElementById('level-complete-overlay').classList.remove('hidden');
+            } else {
+                // All 3 Levels Completed
+                showStudentForm();
+            }
+        }
+
+        document.getElementById('btn-next-level').addEventListener('click', () => {
+            document.getElementById('level-complete-overlay').classList.add('hidden');
+            loadLevel(currentLevel + 1);
+        });
+
+        // --- Form Submission & Final Scorecard ---
+        function showStudentForm() {
+            isGamePaused = true;
+            document.getElementById('form-overlay').classList.remove('hidden');
+        }
+
+        document.getElementById('student-form').addEventListener('submit', (e) => {
+            e.preventDefault();
+            studentData.name = document.getElementById('student-name').value;
+            studentData.classGroup = document.getElementById('student-class').value;
+
+            document.getElementById('form-overlay').classList.add('hidden');
+            renderScorecard();
+        });
+
+        function renderScorecard() {
+            document.getElementById('scorecard-overlay').classList.remove('hidden');
+
+            const now = new Date();
+            const dateStr = now.toLocaleDateString('ms-MY', { day: '2-digit', month: '2-digit', year: 'numeric' });
+            const timeStr = now.toLocaleTimeString('ms-MY', { hour: '2-digit', minute: '2-digit' });
+            
+            document.getElementById('res-timestamp').innerText = `${dateStr}, ${timeStr}`;
+            document.getElementById('res-name').innerText = studentData.name || "Murid";
+            document.getElementById('res-class').innerText = studentData.classGroup || "-";
+            document.getElementById('res-score').innerText = score;
+            document.getElementById('res-accuracy').innerText = `${quizCorrectCount}/${totalQuizAttempted}`;
+
+            // Accuracy % (Berdasarkan ketepatan kuiz sahaja)
+            const accuracyPercent = totalQuizAttempted > 0 ? (quizCorrectCount / totalQuizAttempted) * 100 : 0;
+
+            // Calculate Grade, TP & Feedback strictly based on Quiz Accuracy
+            let grade = "E";
+            let tp = "TP 1";
+            let feedback = "Perlu bimbingan lanjutan. Murid digalakkan merujuk semula buku teks Bab 2 ASK Tingkatan 3 bersama guru mata pelajaran.";
+
+            if (accuracyPercent >= 90) {
+                grade = "A+";
+                tp = "TP 6";
+                feedback = "SANGAT CEMERLANG (TP6)! Ketepatan jawapan sangat tinggi. Anda telah menunjukkan penguasaan menyeluruh bagi Bab 2 Kriptografi secara kritis.";
+            } else if (accuracyPercent >= 75) {
+                grade = "A";
+                tp = "TP 5";
+                feedback = "CEMERLANG (TP5)! Kefahaman yang amat mantap mengenai konsep penyulitan, perkhidmatan keselamatan data dan sifer.";
+            } else if (accuracyPercent >= 60) {
+                grade = "B";
+                tp = "TP 4";
+                feedback = "BAIK (TP4)! Berjaya menjawab sebahagian besar soalan kuiz dengan tepat dan memahami konsep utama Kriptografi.";
+            } else if (accuracyPercent >= 45) {
+                grade = "C";
+                tp = "TP 3";
+                feedback = "MEMUASKAN (TP3)! Berjaya memahami asas Kriptografi. Disyorkan membuat latihan tambahan untuk meningkatkan ketepatan jawapan.";
+            } else if (accuracyPercent >= 30) {
+                grade = "D";
+                tp = "TP 2";
+                feedback = "PERLU IMPROVEMENT (TP2)! Ketepatan jawapan masih rendah. Buat ulangkaji lanjut berkaitan jenis sifer dan perkhidmatan keselamatan.";
+            }
+
+            // Update UI elements
+            document.getElementById('res-grade').innerText = grade;
+            document.getElementById('res-tp').innerText = tp;
+            document.getElementById('res-feedback').innerText = feedback;
+
+            // Update Sub-topic Statuses based strictly on accuracy thresholds
+            document.getElementById('tp-topic-1').innerText = (accuracyPercent >= 40) ? "✔ Menguasai" : "⚠️ Perlu Bimbingan";
+            document.getElementById('tp-topic-1').className = (accuracyPercent >= 40) ? "font-semibold text-green-400 print-dark-text" : "font-semibold text-amber-400 print-dark-text";
+
+            document.getElementById('tp-topic-2').innerText = (accuracyPercent >= 60) ? "✔ Menguasai" : "⚠️ Perlu Bimbingan";
+            document.getElementById('tp-topic-2').className = (accuracyPercent >= 60) ? "font-semibold text-green-400 print-dark-text" : "font-semibold text-amber-400 print-dark-text";
+
+            document.getElementById('tp-topic-3').innerText = (accuracyPercent >= 80) ? "✔ Menguasai" : "⚠️ Perlu Bimbingan";
+            document.getElementById('tp-topic-3').className = (accuracyPercent >= 80) ? "font-semibold text-green-400 print-dark-text" : "font-semibold text-amber-400 print-dark-text";
+        }
+
+        document.getElementById('btn-restart').addEventListener('click', () => {
+            document.getElementById('scorecard-overlay').classList.add('hidden');
+            score = 0;
+            lives = 3;
+            quizCorrectCount = 0;
+            totalQuizAttempted = 0;
+            isGameOver = false;
+            updateHUD();
+            loadLevel(1);
+        });
+
+        document.getElementById('btn-exit').addEventListener('click', () => {
+            document.getElementById('scorecard-overlay').classList.add('hidden');
+            document.getElementById('start-overlay').classList.remove('hidden');
+            score = 0;
+            lives = 3;
+            quizCorrectCount = 0;
+            totalQuizAttempted = 0;
+            isGameOver = true;
+            isGamePaused = true;
+            updateHUD();
+        });
+
+        // --- Drawing Engine ---
+        function render() {
+            // Clear Canvas
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            // Background Grid / Sky Detail
+            ctx.fillStyle = '#1e1b4b';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            // Draw Platforms
+            platforms.forEach(plat => {
+                ctx.fillStyle = plat.color;
+                ctx.fillRect(plat.x, plat.y, plat.width, plat.height);
+                // Top border for platform
+                ctx.fillStyle = '#64748b';
+                ctx.fillRect(plat.x, plat.y, plat.width, 3);
+            });
+
+            // Draw Goal Door
+            ctx.fillStyle = goalDoor.open ? '#10b981' : '#ef4444';
+            ctx.fillRect(goalDoor.x, goalDoor.y, goalDoor.width, goalDoor.height);
+            ctx.fillStyle = '#ffffff';
+            ctx.font = '20px sans-serif';
+            ctx.fillText(goalDoor.open ? '🔓' : '🔒', goalDoor.x + 8, goalDoor.y + 36);
+
+            // Draw Collectibles (🔑 Keys)
+            collectibles.forEach(item => {
+                if (!item.collected) {
+                    ctx.font = '16px sans-serif';
+                    ctx.fillText('🔑', item.x, item.y + 14);
+                }
+            });
+
+            // Draw Question Blocks (❓)
+            questionBlocks.forEach(block => {
+                ctx.fillStyle = block.active ? '#f59e0b' : '#64748b';
+                ctx.fillRect(block.x, block.y, block.width, block.height);
+                ctx.strokeStyle = '#ffffff';
+                ctx.strokeRect(block.x, block.y, block.width, block.height);
+
+                ctx.fillStyle = '#ffffff';
+                ctx.font = 'bold 12px "Press Start 2P", cursive';
+                ctx.fillText(block.active ? '?' : '✓', block.x + 6, block.y + 17);
+            });
+
+            // Draw Enemies (👾 Cyber Virus)
+            enemies.forEach(enemy => {
+                ctx.font = '18px sans-serif';
+                ctx.fillText('👾', enemy.x, enemy.y + 18);
+            });
+
+            // Draw Player (Ajen Kripto)
+            ctx.fillStyle = player.color;
+            // Body
+            ctx.fillRect(player.x, player.y + 8, player.width, player.height - 8);
+            // Head
+            ctx.fillStyle = '#fde047';
+            ctx.fillRect(player.x + 2, player.y, player.width - 4, 10);
+            // Eyes
+            ctx.fillStyle = '#000000';
+            const eyeOffset = player.facingRight ? 12 : 4;
+            ctx.fillRect(player.x + eyeOffset, player.y + 3, 3, 3);
+
+            // Main Game Loop Request
+            update();
+            requestAnimationFrame(render);
+        }
+
+        // --- Start Game Event ---
+        document.getElementById('btn-start').addEventListener('click', () => {
+            initAudio();
+            document.getElementById('start-overlay').classList.add('hidden');
+            loadLevel(1);
+            render();
+        });
+
+    </script>
+</body>
+</html>
