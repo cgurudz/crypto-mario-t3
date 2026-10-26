@@ -14,6 +14,12 @@
             background-color: #0f172a;
             color: #f8fafc;
             touch-action: manipulation;
+            overscroll-behavior: none;
+            -webkit-user-select: none;
+            user-select: none;
+        }
+        .touch-none {
+            touch-action: none;
         }
         .pixel-font {
             font-family: 'Press Start 2P', cursive;
@@ -101,15 +107,15 @@
             <canvas id="gameCanvas" width="800" height="400" class="w-full h-auto block"></canvas>
 
             <!-- Overlay Screen: Start / Menu -->
-            <div id="start-overlay" class="absolute inset-0 bg-slate-950/90 backdrop-blur-md flex flex-col items-center justify-center p-6 text-center z-10">
+            <div id="start-overlay" class="absolute inset-0 bg-slate-950/90 backdrop-blur-md flex flex-col items-center justify-center p-4 sm:p-6 text-center z-10 overflow-y-auto">
                 <h2 class="pixel-font text-lg sm:text-2xl text-amber-400 mb-3 animate-pulse">MISI KRIPTOGRAFI</h2>
-                <p class="text-slate-300 text-xs sm:text-sm max-w-md mb-6 leading-relaxed">
+                <p class="text-slate-300 text-xs sm:text-sm max-w-md mb-4 leading-relaxed">
                     Bantu <b>Ajen Kripto</b> mengumpul Kunci Sifer 🔑, menjawab Soalan Kriptografi ❓, dan mengelak Cyber-Virus 👾 untuk menyelamatkan data sekolah!
                 </p>
-                <div class="bg-slate-800/80 p-4 rounded-lg mb-6 text-left text-xs max-w-sm border border-slate-700 text-slate-300 space-y-1">
+                <div class="bg-slate-800/80 p-3 sm:p-4 rounded-lg mb-4 text-left text-xs max-w-sm border border-slate-700 text-slate-300 space-y-1">
                     <p class="font-semibold text-amber-300 mb-1">🎮 Kawalan Permainan:</p>
-                    <p>• <b>Kiri / Kanan:</b> Anak Panah / Butang A D</p>
-                    <p>• <b>Lompat:</b> Spacebar / Anak Panah Atas / W</p>
+                    <p>• <b>Komputer:</b> Kekunci Anak Panah / A D / Spacebar</p>
+                    <p>• <b>Telefon / Tablet:</b> Gunakan Butang Sentuh (◀ ▶ & LOMPAT)</p>
                     <p>• <b>Lompat atas Kotak Soalan ❓</b> untuk jawab kuiz!</p>
                 </div>
                 <button id="btn-start" class="pixel-font bg-amber-500 hover:bg-amber-400 text-slate-950 px-6 py-3 rounded-lg text-sm transition transform hover:scale-105 active:scale-95 shadow-lg font-bold">
@@ -118,16 +124,16 @@
             </div>
 
             <!-- Overlay Screen: Quiz Modal -->
-            <div id="quiz-overlay" class="hidden absolute inset-0 bg-slate-950/95 flex flex-col items-center justify-center p-4 sm:p-6 z-20">
-                <div class="bg-slate-900 border-2 border-cyan-500 rounded-xl p-5 max-w-lg w-full text-left shadow-2xl">
+            <div id="quiz-overlay" class="hidden absolute inset-0 bg-slate-950/95 flex flex-col items-center justify-center p-3 sm:p-6 z-20 overflow-y-auto">
+                <div class="bg-slate-900 border-2 border-cyan-500 rounded-xl p-4 sm:p-5 max-w-lg w-full text-left shadow-2xl my-auto">
                     <div class="flex justify-between items-center mb-3">
                         <span class="pixel-font text-xs text-cyan-400">SOALAN CABARAN KRIPTOGRAFI</span>
                         <span id="quiz-level-tag" class="text-xs bg-cyan-950 text-cyan-300 px-2 py-0.5 rounded">Tahap 1</span>
                     </div>
-                    <h3 id="quiz-question" class="text-sm sm:text-base font-semibold text-white mb-4 leading-snug">
+                    <h3 id="quiz-question" class="text-xs sm:text-base font-semibold text-white mb-3 leading-snug">
                         Apakah maksud istilah "Penyulitan" (Encryption)?
                     </h3>
-                    <div id="quiz-options" class="space-y-2 mb-4">
+                    <div id="quiz-options" class="space-y-2 mb-3">
                         <!-- Options injected dynamically -->
                     </div>
                     <div id="quiz-feedback" class="hidden p-3 rounded-lg text-xs font-semibold mb-3"></div>
@@ -265,13 +271,21 @@
 
         </div>
 
-        <!-- Touch Controls for Mobile/Tablet -->
-        <div class="w-full mt-3 flex justify-between items-center sm:hidden px-2">
-            <div class="flex space-x-2">
-                <button id="btn-left" class="bg-slate-800 active:bg-amber-500 text-white p-4 rounded-xl text-xl w-14 h-14 border border-slate-700 shadow-md">◀</button>
-                <button id="btn-right" class="bg-slate-800 active:bg-amber-500 text-white p-4 rounded-xl text-xl w-14 h-14 border border-slate-700 shadow-md">▶</button>
+        <!-- Touch Controls Bar for Mobile/Tablet & Desktop Touch -->
+        <div id="touch-controls" class="w-full mt-2 flex justify-between items-center px-2 py-1 touch-none select-none">
+            <!-- Directional D-Pad -->
+            <div class="flex space-x-2 sm:space-x-3">
+                <button id="btn-left" class="bg-slate-800 active:bg-amber-500 active:text-slate-950 text-amber-400 border-2 border-slate-700 rounded-2xl w-14 h-14 sm:w-16 sm:h-16 flex items-center justify-center text-xl sm:text-2xl font-bold shadow-lg transition-transform active:scale-95 touch-none select-none">
+                    ◀
+                </button>
+                <button id="btn-right" class="bg-slate-800 active:bg-amber-500 active:text-slate-950 text-amber-400 border-2 border-slate-700 rounded-2xl w-14 h-14 sm:w-16 sm:h-16 flex items-center justify-center text-xl sm:text-2xl font-bold shadow-lg transition-transform active:scale-95 touch-none select-none">
+                    ▶
+                </button>
             </div>
-            <button id="btn-jump" class="bg-amber-500 active:bg-amber-400 text-slate-950 font-bold p-4 rounded-xl text-sm w-24 h-14 border border-amber-400 shadow-md pixel-font">JUMP ⬆</button>
+            <!-- Jump Action Button -->
+            <button id="btn-jump" class="pixel-font bg-amber-500 active:bg-amber-400 text-slate-950 border-2 border-amber-300 rounded-2xl px-5 sm:px-8 h-14 sm:h-16 flex items-center justify-center text-xs sm:text-sm font-extrabold shadow-lg transition-transform active:scale-95 touch-none select-none">
+                LOMPAT ⬆
+            </button>
         </div>
     </main>
 
@@ -573,23 +587,56 @@
             if (e.key === 'ArrowUp' || e.key === 'w' || e.key === 'W' || e.key === ' ') keys.up = false;
         });
 
-        // Touch Control Listeners
+        // --- Enhanced Touch & Pointer Controls for Mobile Devices ---
         const setupTouchBtn = (id, keyName) => {
             const btn = document.getElementById(id);
             if (!btn) return;
-            btn.addEventListener('touchstart', (e) => {
-                e.preventDefault();
+
+            const startPress = (e) => {
+                if (e.cancelable) e.preventDefault();
                 initAudio();
                 keys[keyName] = true;
-            });
-            btn.addEventListener('touchend', (e) => {
-                e.preventDefault();
+                btn.classList.add('bg-amber-500', 'text-slate-950');
+                if (navigator.vibrate) {
+                    try { navigator.vibrate(10); } catch(err) {}
+                }
+            };
+
+            const endPress = (e) => {
+                if (e.cancelable) e.preventDefault();
                 keys[keyName] = false;
-            });
+                btn.classList.remove('bg-amber-500', 'text-slate-950');
+            };
+
+            // Pointer Events (Support multi-touch for modern iOS & Android devices)
+            btn.addEventListener('pointerdown', startPress);
+            btn.addEventListener('pointerup', endPress);
+            btn.addEventListener('pointercancel', endPress);
+            btn.addEventListener('pointerleave', endPress);
+
+            // Fallback for older mobile web browsers
+            btn.addEventListener('touchstart', startPress, { passive: false });
+            btn.addEventListener('touchend', endPress, { passive: false });
         };
+
         setupTouchBtn('btn-left', 'left');
         setupTouchBtn('btn-right', 'right');
         setupTouchBtn('btn-jump', 'up');
+
+        // Optional: Canvas direct tap listener for jumping on mobile
+        canvas.addEventListener('touchstart', (e) => {
+            if (isGameOver || isGamePaused) return;
+            initAudio();
+            const rect = canvas.getBoundingClientRect();
+            const touch = e.touches[0];
+            const touchY = touch.clientY - rect.top;
+
+            // Tap upper area of canvas to trigger jump
+            if (touchY < canvas.clientHeight * 0.4) {
+                keys.up = true;
+                setTimeout(() => { keys.up = false; }, 180);
+            }
+        }, { passive: true });
 
         // --- Collision Helper ---
         function checkAABB(rect1, rect2) {
